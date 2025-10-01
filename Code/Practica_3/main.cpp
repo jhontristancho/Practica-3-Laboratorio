@@ -1,1 +1,8 @@
-//ESTE VA SER EL MAIN DE LA PRACTICA 3
+#include <iostream>
+#include "sudo_lib.h"
+
+using namespace std;
+
+int main() {
+    return creadorprincipal();
+}

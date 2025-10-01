@@ -4,4 +4,8 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-        main.cpp
+        main.cpp \
+        sudo_lib.cpp
+
+HEADERS += \
+    sudo_lib.h
