@@ -18,7 +18,6 @@ unsigned char bitsAChar(char bits[8]) {
     return c;
 }
 
-// ---------------- MÉTODO 1 ----------------
 void metodo1(const char bits[], char resultado[], int totalBits, int n) {
     int bloques = totalBits / n;
 

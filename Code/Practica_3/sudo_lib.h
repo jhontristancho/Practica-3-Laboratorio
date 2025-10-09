@@ -1,17 +1,16 @@
 #ifndef SUDO_LIB_H
 #define SUDO_LIB_H
 
-#include <fstream>
 #include <string>
+#include "selector_codificacion.h"
 
-// Crea el archivo sudo.txt con el administrador inicial (si no existe)
+// Funciones existentes
 void crearArchivoAdministrador();
-
-// Valida credenciales de administrador
 bool validarAdministrador(const std::string& cedula, const std::string& clave);
-
-// Crea un usuario en sudo.txt (cedula, clave, saldo)
+bool validarUsuario(const std::string& cedula, const std::string& clave, double& saldo);
 void crearUsuario(const std::string& cedula, const std::string& clave, double saldo);
 int creadorprincipal();
+void mostrarMenuUsuarioConTransacciones(const std::string& cedula, double saldo, const EleccionCodificacion& eleccion);
+void actualizarSaldoEnArchivo(const std::string& cedula, double nuevoSaldo);
 
 #endif

@@ -1,66 +1,149 @@
 #include "metodos_codificacion.h"
 #include <iostream>
-#include <fstream>
 #include <ctime>
+#include <cstdlib>
 
 using namespace std;
-char invertirBit(char bit) {
+
+static char invertirBit(char bit) {
     return (bit == '0') ? '1' : '0';
 }
-string metodoCodificacion1(const string& binario) {
+
+static unsigned int generarSemilla() {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    return static_cast<unsigned int>((std::rand() % 8) + 2); // 2..9
+}
+
+// --------------------------------------------------
+// METODO 1 (con semilla devuelta)
+// --------------------------------------------------
+std::string metodoCodificacion1(const std::string& binario, unsigned int &n_out) {
+    // Validaciones
+    if (binario.empty()) throw "metodoCodificacion1: cadena vacía";
+    for (char c : binario) if (c != '0' && c != '1') throw "metodoCodificacion1: la cadena debe contener solo '0' y '1'";
+
+    // determinar n
+    unsigned int n = n_out;
+    if (n == 0) n = generarSemilla();
+    if (n == 0) throw "metodoCodificacion1: semilla inválida";
+    n_out = n; // devolver semilla usada
+
+    int len = static_cast<int>(binario.size());
+    string salida;
+    salida.resize(binario.size());
+
+    // número de bloques (ceil)
+    int numBloques = (len + static_cast<int>(n) - 1) / static_cast<int>(n);
+
+    for (int b = 0; b < numBloques; ++b) {
+        int start = b * static_cast<int>(n);
+        int end = start + static_cast<int>(n);
+        if (end > len) end = len;
+        int blockSize = end - start;
+        if (blockSize <= 0) continue;
+
+        if (b == 0) {
+            // primer bloque: invertir todos los bits (tomando del original)
+            for (int i = start; i < end; ++i) salida[i] = invertirBit(binario[i]);
+            continue;
+        }
+
+        // Contar 1s y 0s en el bloque anterior del ORIGINAL
+        int prevStart = (b - 1) * static_cast<int>(n);
+        int prevEnd = prevStart + static_cast<int>(n);
+        if (prevEnd > len) prevEnd = len;
+        int count1 = 0, count0 = 0;
+        for (int i = prevStart; i < prevEnd; ++i) {
+            if (binario[i] == '1') ++count1;
+            else ++count0;
+        }
+
+        int step = 1;
+        if (count1 == count0) step = 1;
+        else if (count0 > count1) step = 2;
+        else step = 3;
+
+        // Aplicar regla al bloque actual: invertir offsets 0, step, 2*step...
+        for (int offset = 0; offset < blockSize; ++offset) {
+            int idx = start + offset;
+            if ((offset % step) == 0) salida[idx] = invertirBit(binario[idx]);
+            else salida[idx] = binario[idx];
+        }
+    }
+
+    return salida;
+}
+
+// --------------------------------------------------
+// METODO 2 (con semilla devuelta): rotación derecha 1 por bloque
+// --------------------------------------------------
+std::string metodoCodificacion2(const std::string& binario, unsigned int &n_out) {
+    // Validaciones
+    if (binario.empty()) throw "metodoCodificacion2: cadena vacía";
+    for (char c : binario) if (c != '0' && c != '1') throw "metodoCodificacion2: la cadena debe contener solo '0' y '1'";
+
+    // determinar n
+    unsigned int n = n_out;
+    if (n == 0) n = generarSemilla();
+    if (n == 0) throw "metodoCodificacion2: semilla inválida";
+    n_out = n; // devolver semilla usada
+
+    int len = static_cast<int>(binario.size());
+    string salida;
+    salida.resize(binario.size());
+
+    int numBloques = (len + static_cast<int>(n) - 1) / static_cast<int>(n);
+
+    for (int b = 0; b < numBloques; ++b) {
+        int start = b * static_cast<int>(n);
+        int end = start + static_cast<int>(n);
+        if (end > len) end = len;
+        int blockSize = end - start;
+        if (blockSize <= 0) continue;
+
+        if (blockSize == 1) {
+            salida[start] = binario[start];
+            continue;
+        }
+
+        // rotación derecha por 1: codificado[offset] = original[(offset-1 + blockSize) % blockSize]
+        for (int offset = 0; offset < blockSize; ++offset) {
+            int srcOffset = (offset - 1);
+            if (srcOffset < 0) srcOffset += blockSize;
+            int srcIdx = start + srcOffset;
+            int destIdx = start + offset;
+            salida[destIdx] = binario[srcIdx];
+        }
+    }
+
+    return salida;
+}
+
+// --------------------------------------------------
+// SOBRECARGAS (compatibilidad con firmas anteriores)
+// --------------------------------------------------
+std::string metodoCodificacion1(const std::string& binario) {
+    unsigned int n = 0;
     try {
-        if (binario.empty()) {
-            throw "esta cadena esta vacia";
-        }
-        srand(time(0));//semilla
-        int n = (rand() % 8) + 2; // n entre 2 y 9
-        cout << "la semilla es:" << n << endl;//esto es solo para ver si esta funcionando la semilla
-        string resultado;
-        int longitud = binario.size();
-        for (int i = 0; i < longitud; i += n) {
-            string bloque = binario.substr(i, n);//para separar por bloques
-            if (i == 0) {//primer bloque
-                for (int j = 0; j < bloque.size(); j++) {
-                    bloque[j] = invertirBit(bloque[j]);
-                }
-                resultado += bloque;
-                continue;
-            }
-            string bloqueAnterior = resultado.substr(i - n, n);
-            int conteo0 = 0, conteo1 = 0;
-            for (int j = 0; j < bloqueAnterior.size(); j++) {
-                if (bloqueAnterior[j] == '0') conteo0++;
-                else conteo1++;
-            }
-
-            if (conteo0 == conteo1) {
-                // invertir cada bit
-                for (int j = 0; j < bloque.size(); j++) {
-                    bloque[j] = invertirBit(bloque[j]);
-                }
-            } else if (conteo0 > conteo1) {
-                // invertir cada 2 bits
-                for (int j = 1; j < bloque.size(); j += 2) {
-                    bloque[j] = invertirBit(bloque[j]);
-                }
-            } else {
-                // invertir cada 3 bits
-                for (int j = 2; j < bloque.size(); j += 3) {
-                    bloque[j] = invertirBit(bloque[j]);
-                }
-            }
-
-            resultado += bloque;
-        }
-
-        return resultado;
+        return metodoCodificacion1(binario, n);
+    } catch (const char* msg) {
+        cerr << msg << endl;
+        return string();
+    } catch (...) {
+        cerr << "metodoCodificacion1: error desconocido" << endl;
+        return string();
     }
-    catch (const char* e) {
-        cerr << e << endl;
-        return "";
-    }
-    catch (...) {
-        cerr << "error codificando por el m1" << endl;
-        return "";
+}
+
+std::string metodoCodificacion2(const std::string& binario) {
+    unsigned int n = 0;
+    try {
+        return metodoCodificacion2(binario, n);
+    } catch (const char* msg) {
+        cerr << msg << endl;
+        return string();
+    } catch (...) {
+        cerr << "metodoCodificacion2: error desconocido" << endl;
+        return string();
     }
 }
