@@ -7,35 +7,33 @@ EleccionCodificacion seleccionarTipoYMetodo() {
     eleccion.tipo = 0;
     eleccion.metodo = 0;
 
-    cout << "=== Selección de tipo de dato ===\n";
-    cout << "1. Usar estructura string\n";
-    cout << "2. Usar estructura char\n";
-    cout << "Seleccione una opción (1 o 2): ";
+    cout << "elige el tipo de dato: " << endl;
+    cout << "1. usar string"<<endl;
+    cout << "2. usar arreglo char"<< endl;
+    cout << "solo puedes ingresar 1 o 2: ";
     cin >> eleccion.tipo;
-
     if (eleccion.tipo != 1 && eleccion.tipo != 2) {
-        cout << "Opción inválida. Se usará tipo string por defecto.\n";
+        cout << "sabes que no se puede ingresar eso, voy a usar string";
         eleccion.tipo = 1;
     }
-
-    cout << "\n=== Selección de método de codificación ===\n";
-    cout << "1. Método de codificación 1\n";
-    cout << "2. Método de codificación 2\n";
-    cout << "Seleccione una opción (1 o 2): ";
+    cout << "ahora seleccione el metodo en el que quiera codificar"<< endl;
+    cout << "1. metodo 1"<< endl;
+    cout << "2. metodo 2"<<endl;
+    cout << "solo 1 o 2: ";
     cin >> eleccion.metodo;
 
     if (eleccion.metodo != 1 && eleccion.metodo != 2) {
-        cout << "Opción inválida. Se usará método 1 por defecto.\n";
+        cout << "sabes que no se puede, voy a usar el metodo 1";
         eleccion.metodo = 1;
     }
 
-    cout << "\nHas seleccionado:\n";
+    cout << "se va usar: ";
     if (eleccion.tipo == 1)
-        cout << "- Estructura: string\n";
+        cout << "estructura string";
     else
-        cout << "- Estructura: char\n";
+        cout << "estructura char";
 
-    cout << "- Método de codificación: " << eleccion.metodo << "\n";
+    cout << "metodo de codificacion " << eleccion.metodo << "\n";
 
     return eleccion;
 }

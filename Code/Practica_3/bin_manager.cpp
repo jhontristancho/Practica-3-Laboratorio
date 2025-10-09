@@ -1,7 +1,6 @@
 #include "bin_manager.h"
-#include "metodos_codificacion.h" // Para la implementación con std::string
-#include "codificacionchar.h"     // Para la implementación con char[]
-
+#include "metodos_codificacion.h"
+#include "codificacionchar.h"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -11,9 +10,6 @@
 
 using namespace std;
 
-// --- Funciones estáticas (privadas para este archivo) ---
-
-// Convierte texto ASCII a bits binarios (string)
 static string textoABinario(const string &texto) {
     string binario;
     for (char c : texto) {
@@ -23,19 +19,15 @@ static string textoABinario(const string &texto) {
     }
     return binario;
 }
-
-// Divide una línea del archivo sudo.txt en "cedula,clave,saldo"
+// divide en cedula clave y saldo
 static void dividirLineaSudo(const string &linea, string &cedula, string &clave, double &saldo) {
     size_t pos1 = linea.find(',');
     size_t pos2 = linea.find(',', pos1 + 1);
-
     if (pos1 == string::npos || pos2 == string::npos)
-        throw "Error: formato inválido en sudo.txt (faltan comas).";
-
+        throw "hay un errro en el sudo.txt";
     cedula = linea.substr(0, pos1);
     clave = linea.substr(pos1 + 1, pos2 - pos1 - 1);
     string saldoTexto = linea.substr(pos2 + 1);
-
     try {
         saldo = stod(saldoTexto);
     } catch (...) {
@@ -43,77 +35,49 @@ static void dividirLineaSudo(const string &linea, string &cedula, string &clave,
     }
 }
 
-// Aplica el método de codificación según la elección del usuario
 static string aplicarCodificacion(const EleccionCodificacion &eleccion, const string &texto) {
     string binario = textoABinario(texto);
     string resultado;
-    // Generamos una semilla basada en el tiempo, pero la hacemos un entero simple.
-    // Usamos rand() para mayor variabilidad si se llama rápido.
     srand(time(nullptr));
-    int semilla = (rand() % 8) + 2; // Semilla entre 2 y 9, como en el ejemplo.
-
+    int semilla = (rand() % 8) + 2; // semilla entre 2 y 9
     if (eleccion.tipo == 1) {
-        // --- Implementación con std::string ---
-        unsigned int n_semilla = semilla; // La función de string la espera como unsigned
+        unsigned int n_semilla = semilla; // string recibe como argumento la semilla
         if (eleccion.metodo == 1)
             resultado = metodoCodificacion1(binario, n_semilla);
         else
             resultado = metodoCodificacion2(binario, n_semilla);
 
     } else {
-        // --- Implementación con char[] (Sin STL Vector) ---
         int totalBits = binario.length();
         if (totalBits == 0) return "";
-
-        // 1. Reservar memoria dinámica para los arreglos de C
         char* bits_entrada = new char[totalBits + 1];
         char* bits_salida = new char[totalBits + 1];
-
-        // 2. Copiar el contenido del string al arreglo de char
         strcpy(bits_entrada, binario.c_str());
-
-        // 3. Llamar a la función correcta de codificacionchar.cpp
         if (eleccion.metodo == 1) {
             metodo1(bits_entrada, bits_salida, totalBits, semilla);
         } else {
             metodo2(bits_entrada, bits_salida, totalBits, semilla);
         }
-
-        // 4. Asegurarse de que el resultado sea una cadena de C válida
         bits_salida[totalBits] = '\0';
-
-        // 5. Convertir el arreglo de char de vuelta a un std::string
+        // convertir el arreglo de char a string
         resultado = string(bits_salida);
-
-        // 6. ¡Muy importante! Liberar la memoria reservada
         delete[] bits_entrada;
         delete[] bits_salida;
     }
-
     return resultado;
 }
-
-
-// --- Funciones Públicas ---
-
 void crearBinUsuariosDesdeSudo(const EleccionCodificacion &eleccion) {
     try {
         ifstream archivoEntrada("sudo.txt");
         if (!archivoEntrada.is_open()) throw 1;
-
         ofstream archivoSalida("users.bin", ios::binary | ios::out | ios::trunc);
         if (!archivoSalida.is_open()) throw 1;
-
         string linea, cedula, clave;
         double saldo = 0.0;
-
         while (getline(archivoEntrada, linea)) {
             if (linea.empty()) continue;
-
             dividirLineaSudo(linea, cedula, clave, saldo);
             string claveEncriptada = aplicarCodificacion(eleccion, clave);
-
-            // Guardar en el archivo binario
             unsigned int tam = claveEncriptada.length();
             archivoSalida.write(reinterpret_cast<const char*>(&tam), sizeof(tam));
             archivoSalida.write(claveEncriptada.c_str(), tam);
@@ -121,53 +85,44 @@ void crearBinUsuariosDesdeSudo(const EleccionCodificacion &eleccion) {
 
         archivoEntrada.close();
         archivoSalida.close();
-        cout << "Archivo users.bin creado/actualizado con las claves encriptadas.\n";
+        cout << "se creo el .bin para los usuarios";
 
     } catch (const char* e) {
-        cout << "Error: " << e << endl;
+        cout << "hubo error" << e << endl;
     } catch (int) {
-        cout << "Error de lectura/escritura en archivos.\n";
+        cout << "erro en la escritura de los datos";
     }
 }
-
 void registrarTransaccionEncriptada(const EleccionCodificacion &eleccion, const string &trxDescripcion) {
     try {
-        if (trxDescripcion.empty()) throw "Descripción de transacción vacía.";
+        if (trxDescripcion.empty()) throw "transaccion vacia";
 
         ofstream archivoTransacciones("transactions.bin", ios::binary | ios::out | ios::app);
         if (!archivoTransacciones.is_open()) throw 1;
-
         string trxEncriptada = aplicarCodificacion(eleccion, trxDescripcion);
-
         unsigned int tam = trxEncriptada.length();
         archivoTransacciones.write(reinterpret_cast<const char*>(&tam), sizeof(tam));
         archivoTransacciones.write(trxEncriptada.c_str(), tam);
         archivoTransacciones.close();
-
-        cout << "Transacción encriptada registrada correctamente.\n";
-
+        cout << "se codifico la transaccion";
     } catch (const char* e) {
-        cout << "Error: " << e << endl;
+        cout << "error" << e << endl;
     } catch (int) {
-        cout << "Error de E/S al registrar transacción.\n";
+        cout << "no se pudo registrar la trasaccion, invalido";
     }
 }
-
 void actualizarSaldoUsuarioEnSudo(const string &cedula, double nuevoSaldo) {
     try {
-        if (cedula.empty()) throw "Error: cédula vacía.";
+        if (cedula.empty()) throw "error cedula vacia";
 
         ifstream archivoEntrada("sudo.txt");
         if (!archivoEntrada.is_open()) throw 1;
-
-        // Usamos un archivo temporal para reescribir la información
+        // archivo temporal para escribir la informacion y que genere las validaciones
         ofstream archivoTemporal("sudo_temp.txt", ios::out | ios::trunc);
         if (!archivoTemporal.is_open()) throw 1;
-
         string linea, cedulaActual, claveActual;
         double saldoActual = 0.0;
         bool encontrado = false;
-
         while (getline(archivoEntrada, linea)) {
             if (linea.empty()) {
                 archivoTemporal << endl;
@@ -180,7 +135,7 @@ void actualizarSaldoUsuarioEnSudo(const string &cedula, double nuevoSaldo) {
                 archivoTemporal << cedulaActual << "," << claveActual << "," << nuevoSaldo << endl;
                 encontrado = true;
             } else {
-                archivoTemporal << linea << endl; // Reescribir la línea original
+                archivoTemporal << linea << endl;
             }
         }
 
@@ -189,18 +144,17 @@ void actualizarSaldoUsuarioEnSudo(const string &cedula, double nuevoSaldo) {
 
         if (!encontrado) {
             remove("sudo_temp.txt");
-            throw "Usuario no encontrado en sudo.txt.";
+            throw "este usuario no se encontro en la base de datos";
         }
-
-        // Reemplazar el archivo original con el temporal
+        // remplazar el temporal
         remove("sudo.txt");
         rename("sudo_temp.txt", "sudo.txt");
 
-        cout << "Saldo actualizado para el usuario " << cedula << ".\n";
+        cout << "saldo actualizado: " << cedula << ".\n";
 
     } catch (const char* e) {
-        cout << "Error: " << e << endl;
+        cout << "error: " << e << endl;
     } catch (int) {
-        cout << "Error de E/S al actualizar saldo.\n";
+        cout << "no se pudo actualizar el saldo ";
     }
 }

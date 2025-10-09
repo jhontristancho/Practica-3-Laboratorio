@@ -56,7 +56,6 @@ void metodo1(const char bits[], char resultado[], int totalBits, int n) {
     }
 }
 
-// ---------------- MÉTODO 2 ----------------
 void metodo2(const char bits[], char resultado[], int totalBits, int n) {
     int bloques = totalBits / n;
 
@@ -73,7 +72,6 @@ void metodo2(const char bits[], char resultado[], int totalBits, int n) {
     }
 }
 
-// ---------------- Guardar archivo binario ----------------
 void guardarBinario(const char bits[], int totalBits, const char* nombreSalida) {
     ofstream salida(nombreSalida, ios::binary);
 

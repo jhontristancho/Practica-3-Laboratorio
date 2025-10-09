@@ -8,9 +8,6 @@
 
 using namespace std;
 
-// --- Utilidades internas ---
-
-// Convierte un texto ASCII en bits '0'/'1' usando arreglos
 void textoABits(const char* texto, char* bits, int& totalBits) {
     totalBits = 0;
     for (int i = 0; texto[i] != '\0'; ++i) {
@@ -21,7 +18,6 @@ void textoABits(const char* texto, char* bits, int& totalBits) {
     }
 }
 
-// Guarda los bits como bytes en un archivo binario
 void guardarBitsEnBinario(const char* bits, int totalBits, const char* nombreArchivo) {
     ofstream archivo(nombreArchivo, ios::binary | ios::app);
     if (!archivo.is_open()) throw 1;
@@ -36,43 +32,31 @@ void guardarBitsEnBinario(const char* bits, int totalBits, const char* nombreArc
     archivo.close();
 }
 
-// --- Implementaciones principales ---
-
 void generarBinUsuarios(const EleccionCodificacion& eleccion) {
     try {
         ifstream entrada("sudo.txt");
         if (!entrada.is_open()) throw 1;
-
         ofstream salida("usuarios.bin", ios::binary | ios::trunc);
         if (!salida.is_open()) throw 1;
         salida.close();
-
         char linea[256];
         while (entrada.getline(linea, sizeof(linea))) {
             if (strlen(linea) == 0) continue;
-
-            // Extraer cedula, clave y saldo (separadas por comas)
+            // extrae la cedula y la clave
             char cedula[32] = {0}, clave[32] = {0};
             double saldo = 0.0;
             sscanf(linea, "%[^,],%[^,],%lf", cedula, clave, &saldo);
-
-            // Convertir clave a bits
             char bits[1024];
             int totalBits = 0;
             textoABits(clave, bits, totalBits);
-
-            // Semilla aleatoria
+            // semilla aleatoria para codificar
             int n = (rand() % 5) + 4;
-
-            // Buffer para el resultado
             char resultado[1024];
             memset(resultado, 0, sizeof(resultado));
 
             if (eleccion.tipo == 1) {
-                // Método basado en string (usa metodos_codificacion.cpp)
                 std::string binario;
                 for (int i = 0; i < totalBits; ++i) binario += bits[i];
-
                 std::string codificado;
                 if (eleccion.metodo == 1)
                     codificado = metodoCodificacion1(binario);
@@ -97,15 +81,14 @@ void generarBinUsuarios(const EleccionCodificacion& eleccion) {
         entrada.close();
     }
     catch (int) {
-        cout << "[Error] No se pudo generar usuarios.bin.\n";
+        cout << "error no se crearon los .bin";
         throw;
     }
     catch (...) {
-        cout << "[Error desconocido en generarBinUsuarios].\n";
+        cout << "error desconocido, intente de nuevo";
         throw;
     }
 }
-
 void registrarBinTransaccion(const EleccionCodificacion& eleccion, const char* texto) {
     try {
         char bits[1024];
@@ -139,11 +122,11 @@ void registrarBinTransaccion(const EleccionCodificacion& eleccion, const char* t
         guardarBitsEnBinario(resultado, totalBits, "transacciones.bin");
     }
     catch (int) {
-        cout << "[Error] No se pudo escribir en transacciones.bin.\n";
+        cout << "error no se pudo crear el .bin";
         throw;
     }
     catch (...) {
-        cout << "[Error desconocido en registrarBinTransaccion].\n";
+        cout << "error desconocido intente de nuevo";
         throw;
     }
 }

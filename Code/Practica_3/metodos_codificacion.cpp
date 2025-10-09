@@ -14,20 +14,15 @@ static unsigned int generarSemilla() {
     return static_cast<unsigned int>((std::rand() % 8) + 2); // 2..9
 }
 
-// --------------------------------------------------
-// METODO 1 (con semilla devuelta)
-// --------------------------------------------------
 std::string metodoCodificacion1(const std::string& binario, unsigned int &n_out) {
     // Validaciones
-    if (binario.empty()) throw "metodoCodificacion1: cadena vacía";
-    for (char c : binario) if (c != '0' && c != '1') throw "metodoCodificacion1: la cadena debe contener solo '0' y '1'";
-
+    if (binario.empty()) throw "no ingresaste nada";
+    for (char c : binario) if (c != '0' && c != '1') throw "solo 1 o 0";
     // determinar n
     unsigned int n = n_out;
     if (n == 0) n = generarSemilla();
-    if (n == 0) throw "metodoCodificacion1: semilla inválida";
+    if (n == 0) throw "semilla invalida";
     n_out = n; // devolver semilla usada
-
     int len = static_cast<int>(binario.size());
     string salida;
     salida.resize(binario.size());
@@ -43,12 +38,11 @@ std::string metodoCodificacion1(const std::string& binario, unsigned int &n_out)
         if (blockSize <= 0) continue;
 
         if (b == 0) {
-            // primer bloque: invertir todos los bits (tomando del original)
+            // invertir bits
             for (int i = start; i < end; ++i) salida[i] = invertirBit(binario[i]);
             continue;
         }
-
-        // Contar 1s y 0s en el bloque anterior del ORIGINAL
+        // Contar 1s y 0s en el bloque anterior
         int prevStart = (b - 1) * static_cast<int>(n);
         int prevEnd = prevStart + static_cast<int>(n);
         if (prevEnd > len) prevEnd = len;
@@ -62,8 +56,6 @@ std::string metodoCodificacion1(const std::string& binario, unsigned int &n_out)
         if (count1 == count0) step = 1;
         else if (count0 > count1) step = 2;
         else step = 3;
-
-        // Aplicar regla al bloque actual: invertir offsets 0, step, 2*step...
         for (int offset = 0; offset < blockSize; ++offset) {
             int idx = start + offset;
             if ((offset % step) == 0) salida[idx] = invertirBit(binario[idx]);
@@ -74,20 +66,14 @@ std::string metodoCodificacion1(const std::string& binario, unsigned int &n_out)
     return salida;
 }
 
-// --------------------------------------------------
-// METODO 2 (con semilla devuelta): rotación derecha 1 por bloque
-// --------------------------------------------------
 std::string metodoCodificacion2(const std::string& binario, unsigned int &n_out) {
-    // Validaciones
-    if (binario.empty()) throw "metodoCodificacion2: cadena vacía";
-    for (char c : binario) if (c != '0' && c != '1') throw "metodoCodificacion2: la cadena debe contener solo '0' y '1'";
-
+    if (binario.empty()) throw "cadena vacia";
+    for (char c : binario) if (c != '0' && c != '1') throw "solo 1 y 0";
     // determinar n
     unsigned int n = n_out;
     if (n == 0) n = generarSemilla();
-    if (n == 0) throw "metodoCodificacion2: semilla inválida";
+    if (n == 0) throw "semilla mala";
     n_out = n; // devolver semilla usada
-
     int len = static_cast<int>(binario.size());
     string salida;
     salida.resize(binario.size());
@@ -106,7 +92,6 @@ std::string metodoCodificacion2(const std::string& binario, unsigned int &n_out)
             continue;
         }
 
-        // rotación derecha por 1: codificado[offset] = original[(offset-1 + blockSize) % blockSize]
         for (int offset = 0; offset < blockSize; ++offset) {
             int srcOffset = (offset - 1);
             if (srcOffset < 0) srcOffset += blockSize;
@@ -118,10 +103,7 @@ std::string metodoCodificacion2(const std::string& binario, unsigned int &n_out)
 
     return salida;
 }
-
-// --------------------------------------------------
-// SOBRECARGAS (compatibilidad con firmas anteriores)
-// --------------------------------------------------
+//sobrecarga para llamar sin la semilla
 std::string metodoCodificacion1(const std::string& binario) {
     unsigned int n = 0;
     try {
@@ -130,11 +112,10 @@ std::string metodoCodificacion1(const std::string& binario) {
         cerr << msg << endl;
         return string();
     } catch (...) {
-        cerr << "metodoCodificacion1: error desconocido" << endl;
+        cerr << "error desconocido" << endl;
         return string();
     }
 }
-
 std::string metodoCodificacion2(const std::string& binario) {
     unsigned int n = 0;
     try {
@@ -143,7 +124,7 @@ std::string metodoCodificacion2(const std::string& binario) {
         cerr << msg << endl;
         return string();
     } catch (...) {
-        cerr << "metodoCodificacion2: error desconocido" << endl;
+        cerr << "error desconocido" << endl;
         return string();
     }
 }
